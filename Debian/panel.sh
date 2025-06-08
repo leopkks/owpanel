@@ -253,38 +253,6 @@ import_database() {
     fi
 }
 
-
-install_powerdns_and_mysql_backend() {
-    # Install OpenSSL and PowerDNS with MySQL backend
-    echo "Installing OpenSSL, PowerDNS, and PowerDNS MySQL backend..."
-
-    # Install necessary packages
-    
-    sudo apt install -y openssl pdns-server pdns-backend-mysql
-
-    if [ $? -ne 0 ]; then
-        echo "Failed to install necessary packages. Exiting."
-        exit 1
-    fi
-
-    # Configure permissions for pdns.conf
-    echo "Configuring permissions for /etc/powerdns/pdns.conf..."
-
-    # Set correct permissions for PowerDNS configuration file
-    sudo chmod 644 /etc/powerdns/pdns.conf
-    sudo chown pdns:pdns /etc/powerdns/pdns.conf
-
-    if [ $? -eq 0 ]; then
-        echo "Permissions set for /etc/powerdns/pdns.conf successfully."
-    else
-        echo "Failed to set permissions for /etc/powerdns/pdns.conf."
-        exit 1
-    fi
-
-    echo "PowerDNS installation and configuration completed successfully!"
-}
-
-
 copy_files_and_replace_password() {
     local SOURCE_DIR="$1"
     local TARGET_DIR="$2"
@@ -327,47 +295,6 @@ copy_files_and_replace_password() {
 
 }
 
-generate_pureftpd_ssl_certificate() {
-    local CERT_PATH="/etc/ssl/private/pure-ftpd.pem"
-    local SUBJECT="/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com"
-    local DAYS=3650
-
-    echo "Checking if OpenSSL is installed..."
-
-    # Check if OpenSSL is installed
-    if ! command -v openssl &> /dev/null; then
-        echo "OpenSSL is not installed. Installing it now..."
-        sudo apt install -y openssl
-        if [ $? -ne 0 ]; then
-            echo "Failed to install OpenSSL. Exiting."
-            return 1
-        fi
-    else
-        echo "OpenSSL is already installed."
-    fi
-
-    echo "Generating a self-signed SSL certificate for Pure-FTPd..."
-
-    # Ensure the target directory exists
-    if [ ! -d "$(dirname "$CERT_PATH")" ]; then
-        echo "Directory $(dirname "$CERT_PATH") does not exist. Creating it..."
-        sudo mkdir -p "$(dirname "$CERT_PATH")"
-    fi
-
-    # Generate the certificate
-    sudo openssl req -newkey rsa:1024 -new -nodes -x509 -days "$DAYS" -subj "$SUBJECT" -keyout "$CERT_PATH" -out "$CERT_PATH"
-
-    if [ $? -eq 0 ]; then
-        echo "SSL certificate generated successfully at $CERT_PATH."
-        
-        # Set proper permissions for the certificate
-        sudo chmod 600 "$CERT_PATH"
-        echo "Permissions for $CERT_PATH set to 600."
-    else
-        echo "Failed to generate the SSL certificate. Please check the OpenSSL configuration."
-        return 1
-    fi
-}
 # Function to suppress "need restart" prompts
 suppress_restart_prompts() {
     echo "Suppressing 'need restart' prompts..."
@@ -1041,9 +968,7 @@ install_openlitespeed "$(get_password_from_file "/root/db_credentials_panel.txt"
 change_ols_password "$(get_password_from_file "/root/db_credentials_panel.txt")"
 install_python_dependencies
 
-install_powerdns_and_mysql_backend
 copy_files_and_replace_password "/root/item/move/etc" "/etc" "$(get_password_from_file "/root/db_credentials_panel.txt")"
-generate_pureftpd_ssl_certificate
 allow_ports 22 25 53 80 110 143 443 465 587 993 995 7080 3306 5353 6379 21 223 155 220 2205
 copy_files_and_replace_password "/root/item/move/html" "/usr/local/lsws/Example/html" "$(get_password_from_file "/root/db_credentials_panel.txt")"
 
@@ -1070,9 +995,7 @@ systemctl restart systemd-networkd >/dev/null 2>&1
 echo -n "$OS_NAME" > /usr/local/lsws/Example/html/mypanel/etc//osName
 echo -n "$OS_VERSION" > /usr/local/lsws/Example/html/mypanel/etc/osVersion
 IP=$(ip=$(hostname -I | awk '{print $1}'); if [[ $ip == 10.* || $ip == 172.* || $ip == 192.168.* ]]; then ip=$(curl -m 10 -s ifconfig.me); [[ -z $ip ]] && ip=$(hostname -I | awk '{print $1}'); fi; echo $ip)
-echo "$IP" | sudo tee /etc/pure-ftpd/conf/ForcePassiveIP > /dev/null
 sleep 3
-sudo systemctl restart pdns
 sudo systemctl restart cp
 replace_python_in_cron_and_service
 sudo /usr/local/lsws/bin/lswsctrl restart
