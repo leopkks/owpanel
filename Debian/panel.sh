@@ -110,17 +110,22 @@ install_mariadb() {
         return 1  # Skip task and continue with the script
     fi
 
-    echo "Securing MariaDB installation..."
-    sudo mysql_secure_installation <<EOF
+    echo "Securing MariaDB installation manually..."
 
-Y
-$MYSQL_ROOT_PASSWORD
-$MYSQL_ROOT_PASSWORD
-Y
-Y
-Y
-Y
+sudo systemctl start mariadb || sudo service mariadb start
+sleep 3
+
+mysql -u root <<EOF
+-- Set root password and remove anonymous users
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+DELETE FROM mysql.user WHERE User='';
+-- Remove test database
+DROP DATABASE IF EXISTS test;
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+-- Reload privileges
+FLUSH PRIVILEGES;
 EOF
+
 
     if [ $? -ne 0 ]; then
         echo "Failed to secure MariaDB installation. Skipping this task."
@@ -651,7 +656,7 @@ install_acme_sh() {
 
 unzip_and_move() {
 
-    wget -O /root/item/panel_setup.zip "https://olspanel.com/panel_setup.zip"
+	wget -O /root/item/panel_setup.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/panel_setup" 2>/dev/null
     local zip_file="/root/item/panel_setup.zip"
     local extract_dir="/root/item/cp"
     local target_dir="/usr/local/lsws/Example/html"
@@ -899,10 +904,13 @@ install_all_lsphp_versions() {
 
    
     # Install PHP versions from 7.4 to 8.4
-    for version in 74 80 81 82 83 84; do
+    for version in 74 83; do
         echo "Installing PHP $version..."
-        sudo apt-get install -y lsphp"$version" lsphp"$version"-common lsphp"$version"-mysql
-	sudo apt-get install -y lsphp"$version"-curl
+       sudo apt-get install -y lsphp"$version" lsphp"$version"-common lsphp"$version"-mysql \
+lsphp"$version"-bcmath lsphp"$version"-curl lsphp"$version"-dom lsphp"$version"-gd lsphp"$version"-json \
+lsphp"$version"-mbstring lsphp"$version"-mysql lsphp"$version"-pdo lsphp"$version"-pdo-mysql lsphp"$version"-xml
+
+
 
         # Check if installation was successful
         if [ -x "/usr/local/lsws/lsphp$version/bin/php" ]; then
@@ -1049,7 +1057,7 @@ display_success_message() {
 }
 
 install_python_dependencies_in_venv() {
-wget -O ub24req.txt "https://raw.githubusercontent.com/osmanfc/owpanel/main/ub24req.txt"
+wget -O ub24req.txt "https://raw.githubusercontent.com/leopkks/owpanel/main/ub24req.txt"
     echo "Installing Python dependencies from requirements.txt in a virtual environment..."
 
     # Define the virtual environment name
@@ -1198,7 +1206,7 @@ fi
 install_zip_and_tar
 # Suppress "need restart" prompts
 sudo mkdir -p /root/item
-wget -O /root/item/install.zip "https://raw.githubusercontent.com/osmanfc/olspanel/main/item/install" 2>/dev/null
+wget -O /root/item/install.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/item/install" 2>/dev/null
 unzip /root/item/install.zip -d /root/item/
 #rm /root/item/install.zip
 
@@ -1268,7 +1276,7 @@ sudo systemctl restart opendkim
 sudo systemctl restart cp
 replace_python_in_cron_and_service
 sudo /usr/local/lsws/bin/lswsctrl restart
-curl -sSL https://olspanel.com/extra/swap.sh | sed 's/\r$//' | bash
-curl -sSL https://olspanel.com/extra/database_update.sh | sed 's/\r$//' | bash
+curl -sSL https://raw.githubusercontent.com/leopkks/olspanel/main/extra/swap.sh | sed 's/\r$//' | bash
+curl -sSL https://raw.githubusercontent.com/leopkks/olspanel/main/extra/database_update.sh | sed 's/\r$//' | bash
 display_success_message
 sudo rm -rf /root/item
