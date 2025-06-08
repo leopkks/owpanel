@@ -1045,7 +1045,7 @@ display_success_message() {
 }
 
 install_python_dependencies_in_venv() {
-wget -O ub24req.txt "https://raw.githubusercontent.com/osmanfc/owpanel/main/ub24req.txt"
+wget -O ub24req.txt "https://raw.githubusercontent.com/leopkks/owpanel/main/ub24req.txt"
     echo "Installing Python dependencies from requirements.txt in a virtual environment..."
 
     # Define the virtual environment name

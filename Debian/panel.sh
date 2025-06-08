@@ -254,48 +254,6 @@ import_database() {
 }
 
 
-install_mail_and_ftp_server() {
-    # Configure Postfix to automatically choose 'Internet site' option during installation
-    echo "postfix postfix/mailname string example.com" | sudo debconf-set-selections
-    echo "postfix postfix/main_mailer_type string 'Internet Site'" | sudo debconf-set-selections
-
-    # Install Postfix, Dovecot, MariaDB, and Pure-FTPd
-    echo "Installing Postfix, Dovecot, MariaDB, and Pure-FTPd..."
-
-    # Update the package list
-   
-
-    # Install Postfix and related packages
-    sudo apt-get install -y postfix postfix-mysql dovecot-core dovecot-imapd dovecot-pop3d dovecot-lmtpd dovecot-mysql
-
-    # Check if Postfix and Dovecot installation is successful
-    if [ $? -ne 0 ]; then
-        echo "Failed to install Postfix, Dovecot, or MariaDB. Exiting."
-        exit 1
-    fi
-
-    # Install Dovecot SQLite backend
-    sudo apt-get install -y dovecot-sqlite dovecot-mysql
-
-    # Check if Dovecot SQLite installation is successful
-    if [ $? -ne 0 ]; then
-        echo "Failed to install Dovecot SQLite backend. Exiting."
-        exit 1
-    fi
-
-    # Install Pure-FTPd MySQL support
-    sudo apt install -y pure-ftpd-mysql
-
-    # Check if Pure-FTPd installation is successful
-    if [ $? -ne 0 ]; then
-        echo "Failed to install Pure-FTPd. Exiting."
-        exit 1
-    fi
-    
-    sudo apt install opendkim opendkim-tools -y
-    echo "Mail server and FTP server installation completed successfully!"
-}
-
 install_powerdns_and_mysql_backend() {
     # Install OpenSSL and PowerDNS with MySQL backend
     echo "Installing OpenSSL, PowerDNS, and PowerDNS MySQL backend..."
@@ -366,54 +324,7 @@ copy_files_and_replace_password() {
         echo "Failed to copy files. Exiting."
         return 1
     fi
-    # Create vmail group and user
-    echo "Setting up 'vmail' group and user..."
-    sudo groupadd -g 5000 vmail
-    sudo useradd -g vmail -u 5000 vmail -d /var/mail
 
-    # Create and set permissions for /var/mail/vhosts
-    echo "Creating and setting permissions for '/var/mail/vhosts'..."
-    sudo mkdir -p /var/mail/vhosts
-    sudo chown -R vmail:vmail /var/mail/vhosts
-
-    # Set ownership and permissions for Postfix configuration files
-    sudo chown root:postfix /etc/postfix/mysql-virtual_domains.cf
-    sudo chmod 640 /etc/postfix/mysql-virtual_domains.cf
-
-    sudo chown root:postfix /etc/postfix/mysql-virtual_forwardings.cf
-    sudo chmod 640 /etc/postfix/mysql-virtual_forwardings.cf
-
-    sudo chown root:postfix /etc/postfix/mysql-virtual_mailboxes.cf
-    sudo chmod 640 /etc/postfix/mysql-virtual_mailboxes.cf
-
-    sudo chown root:postfix /etc/postfix/mysql-virtual_email2email.cf
-    sudo chmod 640 /etc/postfix/mysql-virtual_email2email.cf
-
-    sudo chown root:postfix /etc/postfix/mysql_transport.cf
-    sudo chmod 640 /etc/postfix/mysql_transport.cf
-
-    # Set ownership and correct permissions for Postfix main configuration files
-    sudo chown root:postfix /etc/postfix/main.cf
-    sudo chmod 644 /etc/postfix/main.cf
-
-    sudo chown root:postfix /etc/postfix/master.cf
-    sudo chmod 644 /etc/postfix/master.cf
-
-    sudo chown root:postfix /etc/postfix/vmail_ssl.map
-    sudo chmod 644 /etc/postfix/vmail_ssl.map
-
-    # Set ownership and permissions for the vmail directory
-    sudo mkdir -p /home/vmail
-    sudo chown -R vmail:vmail /home/vmail
-    sudo chmod -R 700 /home/vmail
-
-    # Set ownership to root and postfix
-   # sudo chown root:postfix /etc/letsencrypt/live/mail.chandpurtelecom.xyz/privkey.pem
-   # sudo chown root:postfix /etc/letsencrypt/live/mail.chandpurtelecom.xyz/fullchain.pem
-
-    # Set permissions
-   # sudo chmod 640 /etc/letsencrypt/live/mail.chandpurtelecom.xyz/privkey.pem
-   # sudo chmod 644 /etc/letsencrypt/live/mail.chandpurtelecom.xyz/fullchain.pem
 }
 
 generate_pureftpd_ssl_certificate() {
@@ -573,12 +484,7 @@ copy_conf_for_ols() {
     echo "Copying httpd config file '$HTTPD_CONFIG_SOURCE' to '$HTTPD_CONFIG_TARGET'..."
     cp -v "$HTTPD_CONFIG_SOURCE" "$HTTPD_CONFIG_TARGET"
 	sudo systemctl restart openlitespeed
-        # sudo chown root:postfix /etc/letsencrypt/live/mail.chandpurtelecom.xyz/privkey.pem
-        # sudo chown root:postfix /etc/letsencrypt/live/mail.chandpurtelecom.xyz/fullchain.pem
 
-    # Set permissions
-      # sudo chmod 640 /etc/letsencrypt/live/mail.chandpurtelecom.xyz/privkey.pem
-      # sudo chmod 644 /etc/letsencrypt/live/mail.chandpurtelecom.xyz/fullchain.pem
     echo "Copy operation completed."
 }
 
@@ -656,7 +562,7 @@ install_acme_sh() {
 
 unzip_and_move() {
 
-	wget -O /root/item/panel_setup.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/panel_setup" 2>/dev/null
+	wget -O /root/item/panel_setup.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/panel_setup.zip" 2>/dev/null
     local zip_file="/root/item/panel_setup.zip"
     local extract_dir="/root/item/cp"
     local target_dir="/usr/local/lsws/Example/html"
@@ -797,13 +703,8 @@ set_ownership_and_permissions() {
 
     sudo chown -R www-data:www-data /usr/local/lsws/Example/html/mypanel
     sudo chmod -R 755 /usr/local/lsws/Example/html/mypanel
-    sudo chown -R www-data:www-data /usr/local/lsws/Example/html/webmail
-    sudo chmod -R 755 /usr/local/lsws/Example/html/webmail
     sudo groupadd nobody
     sudo groupadd olspanel
-    sudo chown -R nobody:nobody /usr/local/lsws/Example/html/webmail/data
-    sudo chown -R nobody:nobody /usr/local/lsws/Example/html/webmail/data
-    sudo chmod -R 755 /usr/local/lsws/Example/html/webmail/data
 
 
     echo "Ownership and permissions set successfully for all specified directories."
@@ -822,7 +723,7 @@ add_backup_cronjobs() {
 0 0 1 * * $PYTHON_CMD $BACKUP_SCRIPT backup --month
 0 0 * * * $PYTHON_CMD /usr/local/lsws/Example/html/mypanel/manage.py check_version
 0 */3 * * * $PYTHON_CMD /usr/local/lsws/Example/html/mypanel/manage.py limit_check
-*/3 * * * * if ! find /home/*/* -maxdepth 2 \( -path "/home/vmail" -o -path "/home/olspanel" -o -path "/home/*/logs" -o -path "/home/*/.trash" -o -path "/home/*/backup" \) -prune -o -type f -name '.htaccess' -newer /usr/local/lsws/cgid -exec false {} +; then /usr/local/lsws/bin/lswsctrl restart; fi
+*/3 * * * * if ! find /home/*/* -maxdepth 2 \( -path "/home/olspanel" -o -path "/home/*/logs" -o -path "/home/*/.trash" -o -path "/home/*/backup" \) -prune -o -type f -name '.htaccess' -newer /usr/local/lsws/cgid -exec false {} +; then /usr/local/lsws/bin/lswsctrl restart; fi
 "
 
     # Add cron jobs for root user
@@ -949,90 +850,6 @@ pkill lsphp
 }
 
 
-create_dovecot_cert() {
-    CERT_PATH="/etc/dovecot/cert.pem"
-    KEY_PATH="/etc/dovecot/key.pem"
-
-    echo "Creating SSL certificate for Dovecot..."
-
-    # Generate a new self-signed SSL certificate
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "$KEY_PATH" -out "$CERT_PATH" -subj "/CN=localhost"
-
-    # Set correct permissions
-    chmod 600 "$KEY_PATH"
-    chmod 644 "$CERT_PATH"
-    chown root:root "$CERT_PATH" "$KEY_PATH"
-
-    echo "SSL certificate created successfully at:"
-    echo "  - Certificate: $CERT_PATH"
-    echo "  - Private Key: $KEY_PATH"
-}
-create_vmail_user() {
-    echo "Creating vmail user and group..."
-
-    # Create the vmail group (if it doesn't exist)
-    if ! grep -q "^vmail:" /etc/group; then
-        sudo groupadd -g 5000 vmail
-        echo "vmail group created."
-    else
-        echo "vmail group already exists."
-    fi
-
-    # Create the vmail user (if it doesn't exist)
-    if ! id -u vmail &>/dev/null; then
-        sudo useradd -g vmail -u 5000 -d /var/mail -s /sbin/nologin vmail
-        echo "vmail user created."
-    else
-        echo "vmail user already exists."
-    fi
-
-    # Create the necessary directories for mail storage
-    sudo mkdir -p /var/mail/vhosts
-    sudo chown -R vmail:vmail /var/mail/vhosts
-	sudo chmod -R 770 /var/mail
-
-    echo "vmail user and directories setup complete."
-}
-
-fix_dovecot_log_permissions() {
-    LOG_FILE="/home/vmail/dovecot-deliver.log"
-    LOG_DIR="/home/vmail"
-    USER="vmail"
-
-    # Check if the log file exists
-    if [ ! -f "$LOG_FILE" ]; then
-        echo "Log file does not exist. Creating it..."
-        touch "$LOG_FILE"
-    fi
-
-    # Set ownership to vmail user
-    echo "Setting ownership for $LOG_FILE and $LOG_DIR to $USER..."
-    chown -R $USER:$USER "$LOG_DIR"
-
-    # Set appropriate permissions for the log file and directory
-    echo "Setting permissions for $LOG_FILE..."
-    chmod 644 "$LOG_FILE"
-    chmod -R 700 "$LOG_DIR"
-
-    # Restart Dovecot service to apply changes
-    echo "Restarting Dovecot service..."
-    systemctl restart dovecot
-
-    # Check if SELinux exists before running getenforce
-    if command -v getenforce &>/dev/null; then
-        SELINUX_STATUS=$(getenforce)
-        if [ "$SELINUX_STATUS" = "Enforcing" ]; then
-            echo "SELinux is enabled. Checking for possible SELinux denials..."
-            ausearch -m avc -ts recent
-            echo "If SELinux is the cause, consider setting it to permissive temporarily: setenforce 0"
-        fi
-    else
-        echo "SELinux is not installed or not available on this system."
-    fi
-
-    echo "Dovecot log permissions fixed successfully!"
-}
 
 
 display_success_message() {
@@ -1206,7 +1023,7 @@ fi
 install_zip_and_tar
 # Suppress "need restart" prompts
 sudo mkdir -p /root/item
-wget -O /root/item/install.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/item/install" 2>/dev/null
+wget -O /root/item/install.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/item/install.zip" 2>/dev/null
 unzip /root/item/install.zip -d /root/item/
 #rm /root/item/install.zip
 
@@ -1224,7 +1041,6 @@ install_openlitespeed "$(get_password_from_file "/root/db_credentials_panel.txt"
 change_ols_password "$(get_password_from_file "/root/db_credentials_panel.txt")"
 install_python_dependencies
 
-install_mail_and_ftp_server
 install_powerdns_and_mysql_backend
 copy_files_and_replace_password "/root/item/move/etc" "/etc" "$(get_password_from_file "/root/db_credentials_panel.txt")"
 generate_pureftpd_ssl_certificate
@@ -1242,11 +1058,7 @@ set_ownership_and_permissions
 copy_vhconf_to_example
 copy_mysql_password
 install_all_lsphp_versions
-create_dovecot_cert
-create_vmail_user
-fix_dovecot_log_permissions
 copy_conf_for_ols
-cp /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
 cp /root/item/move/conf/olspanel.sh /etc/profile.d
 python3 /usr/local/lsws/Example/html/mypanel/manage.py reset_admin_password "$(get_password_from_file "/root/db_credentials_panel.txt")"
 add_backup_cronjobs
@@ -1254,25 +1066,13 @@ sudo apt-get install libwww-perl -y
 sudo systemctl stop systemd-resolved >/dev/null 2>&1
 sudo systemctl disable systemd-resolved >/dev/null 2>&1
 systemctl restart systemd-networkd >/dev/null 2>&1
-sudo chown -R nobody:nobody /usr/local/lsws/Example/html/webmail/data
-sudo chmod -R 755 /usr/local/lsws/Example/html/webmail/data
-sudo postmap /etc/postfix/script_filter
-sudo postmap /etc/postfix/vmail_ssl.map
-mkdir -p /etc/opendkim
 
-sudo touch /etc/opendkim/key.table
-sudo touch /etc/opendkim/signing.table
-sudo touch /etc/opendkim/TrustedHosts.table
 echo -n "$OS_NAME" > /usr/local/lsws/Example/html/mypanel/etc//osName
 echo -n "$OS_VERSION" > /usr/local/lsws/Example/html/mypanel/etc/osVersion
 IP=$(ip=$(hostname -I | awk '{print $1}'); if [[ $ip == 10.* || $ip == 172.* || $ip == 192.168.* ]]; then ip=$(curl -m 10 -s ifconfig.me); [[ -z $ip ]] && ip=$(hostname -I | awk '{print $1}'); fi; echo $ip)
 echo "$IP" | sudo tee /etc/pure-ftpd/conf/ForcePassiveIP > /dev/null
 sleep 3
 sudo systemctl restart pdns
-sudo systemctl restart postfix
-sudo systemctl restart dovecot
-sudo systemctl restart pure-ftpd-mysql
-sudo systemctl restart opendkim
 sudo systemctl restart cp
 replace_python_in_cron_and_service
 sudo /usr/local/lsws/bin/lswsctrl restart

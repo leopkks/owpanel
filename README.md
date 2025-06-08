@@ -53,5 +53,4 @@ Here are some screenshots of the **OLSpanel** control panel:
 ## 📥 Installation
 Run the following command to install `OLSpanel`:
 ```sh
-bash <(curl -fsSL https://raw.githubusercontent.com/leopkks/olspanel/main/install.sh || wget -qO- https://raw.githubusercontent.com/leopkks/olspanel/main/install.sh)
-
+bash <(curl -fsSL https://raw.githubusercontent.com/leopkks/owpanel/main/install.sh || wget -qO- https://raw.githubusercontent.com/leopkks/owpanel/main/install.sh)
