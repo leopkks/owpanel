@@ -562,7 +562,7 @@ install_acme_sh() {
 
 unzip_and_move() {
 
-	wget -O /root/item/panel_setup.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/panel_setup.zip" 2>/dev/null
+	wget -O /root/item/panel_setup.zip "https://raw.githubusercontent.com/leopkks/owpanel/refs/heads/main/panel_setup.zip" 2>/dev/null
     local zip_file="/root/item/panel_setup.zip"
     local extract_dir="/root/item/cp"
     local target_dir="/usr/local/lsws/Example/html"
@@ -1023,7 +1023,7 @@ fi
 install_zip_and_tar
 # Suppress "need restart" prompts
 sudo mkdir -p /root/item
-wget -O /root/item/install.zip "https://raw.githubusercontent.com/leopkks/olspanel/main/item/install.zip" 2>/dev/null
+wget -O /root/item/install.zip "https://raw.githubusercontent.com/leopkks/owpanel/refs/heads/main/item/install.zip" 2>/dev/null
 unzip /root/item/install.zip -d /root/item/
 #rm /root/item/install.zip
 
@@ -1076,7 +1076,7 @@ sudo systemctl restart pdns
 sudo systemctl restart cp
 replace_python_in_cron_and_service
 sudo /usr/local/lsws/bin/lswsctrl restart
-curl -sSL https://raw.githubusercontent.com/leopkks/olspanel/main/extra/swap.sh | sed 's/\r$//' | bash
-curl -sSL https://raw.githubusercontent.com/leopkks/olspanel/main/extra/database_update.sh | sed 's/\r$//' | bash
+curl -sSL https://raw.githubusercontent.com/leopkks/owpanel/refs/heads/main/extra/swap.sh | sed 's/\r$//' | bash
+curl -sSL https://raw.githubusercontent.com/leopkks/owpanel/refs/heads/main/extra/database_update.sh | sed 's/\r$//' | bash
 display_success_message
 sudo rm -rf /root/item
