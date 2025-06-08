@@ -63,6 +63,7 @@ install_pip() {
     echo "Updating system..."
     wait_for_apt_lock
     sudo apt update && sudo apt upgrade -y
+	sudo mkdir -p /root/item
     echo "Installing Python..."
     wait_for_apt_lock
     sudo apt install -y python3 python3-venv python3-pip pkg-config
